@@ -21,24 +21,32 @@
 				--input-bg: rgba(0, 0, 0, 0.4);
 			}
 
-			/* 浅色模式适配 - 调整为纯白风格 */
+			/* 浅色模式适配 - 彻底纯白风格 */
 			@media (prefers-color-scheme: light) {
 				:root {
-					--bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+					--bg-gradient: #ffffff; /* 页面背景改为纯白 */
 					--glass-bg: #ffffff; /* 聊天框改为纯白 */
-					--glass-border: #e2e8f0; /* 边框改为浅灰白色 */
+					--glass-border: #ffffff; /* 容器边框改为纯白 */
 					--text-color: #0f172a;
 					--text-light: #64748b;
 					--user-msg-bg: #1d4ed8;
-					--assistant-msg-bg: #f1f5f9;
+					--assistant-msg-bg: #f8fafc; /* AI 气泡保持极浅灰色以区分 */
 					--input-bg: #ffffff; /* 输入框改为纯白 */
 				}
 				.user-message p { color: #ffffff; }
 				.chat-container {
-					box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); /* 浅色模式下减弱阴影 */
+					border: 1px solid #f1f5f9; /* 使用极浅的灰色代替纯白边框，防止视觉消失 */
+					box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* 极弱的投影 */
 				}
 				.message-input {
-					background: #fcfcfc; /* 底部输入栏背景微调 */
+					background: #ffffff;
+					border-top: 1px solid #f1f5f9; /* 内部分割线设为极浅色 */
+				}
+				#user-input {
+					border: 1px solid #f1f5f9; /* 输入框边框 */
+				}
+				.assistant-message {
+					border: 1px solid #f1f5f9; /* AI 消息气泡边框 */
 				}
 			}
 
@@ -90,6 +98,10 @@
 				font-weight: 700;
 				letter-spacing: -0.025em;
 				text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+			}
+
+			@media (prefers-color-scheme: light) {
+				h1 { text-shadow: none; } /* 浅色模式去掉文字阴影 */
 			}
 
 			header p {
@@ -174,7 +186,7 @@
 
 			#user-input:focus {
 				border-color: var(--primary-color);
-				background-color: rgba(0, 0, 0, 0.1);
+				background-color: rgba(0, 0, 0, 0.05);
 			}
 
 			#send-button {

@@ -227,7 +227,10 @@
 
 		<div class="chat-container">
 			<div id="chat-messages" class="chat-messages">
-				<div class="message assistant-message"><p>你好！我是基于 Cloudflare Workers AI 的聊天应用。今天有什么我可以帮你的吗？</p></div>
+				<!-- 恢复初始欢迎消息 -->
+				<div class="message assistant-message">
+					<p>你好！我是基于 Cloudflare Workers AI 的聊天应用。今天有什么我可以帮你的吗？</p>
+				</div>
 			</div>
 
 			<div class="typing-indicator" id="typing-indicator">
@@ -245,41 +248,7 @@
 			</div>
 		</div>
 
-		<script>
-			const userInput = document.getElementById('user-input');
-			const sendButton = document.getElementById('send-button');
-
-			// 处理发送逻辑的统一函数
-			function handleSend() {
-				const text = userInput.value.trim();
-				if (text && typeof sendMessage === 'function') {
-					sendMessage(text);
-					userInput.value = '';
-					userInput.style.height = 'auto';
-				} else if (!text) {
-					console.warn("Cannot send empty message");
-				} else {
-					console.error("sendMessage function is not defined in chat.js");
-				}
-			}
-
-			// 绑定点击事件
-			sendButton.addEventListener('click', handleSend);
-
-			// 绑定键盘 Enter 事件
-			userInput.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter' && !e.shiftKey) {
-					e.preventDefault();
-					handleSend();
-				}
-			});
-
-			// 自动调整文本框高度
-			userInput.addEventListener('input', function() {
-				this.style.height = 'auto';
-				this.style.height = (this.scrollHeight) + 'px';
-			});
-		</script>
+		<!-- 引入逻辑脚本 -->
 		<script src="chat.js"></script>
 	</body>
 </html>

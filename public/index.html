@@ -158,12 +158,12 @@
 				border-radius: 16px;
 				color: var(--text-color);
 				font-family: inherit;
-				resize: none !important; /* 强制彻底禁用 */
+				resize: none !important;
 				min-height: 44px;
 				max-height: 150px;
 				outline: none;
 				transition: all 0.2s;
-				overflow: hidden; /* 隐藏溢出内容导致的渲染异常 */
+				overflow: hidden;
 			}
 
 			#user-input:focus {
@@ -249,13 +249,32 @@
 			const userInput = document.getElementById('user-input');
 			const sendButton = document.getElementById('send-button');
 
+			// 处理发送逻辑的统一函数
+			function handleSend() {
+				const text = userInput.value.trim();
+				if (text && typeof sendMessage === 'function') {
+					sendMessage(text);
+					userInput.value = '';
+					userInput.style.height = 'auto';
+				} else if (!text) {
+					console.warn("Cannot send empty message");
+				} else {
+					console.error("sendMessage function is not defined in chat.js");
+				}
+			}
+
+			// 绑定点击事件
+			sendButton.addEventListener('click', handleSend);
+
+			// 绑定键盘 Enter 事件
 			userInput.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter' && !e.shiftKey) {
 					e.preventDefault();
-					sendButton.click();
+					handleSend();
 				}
 			});
 
+			// 自动调整文本框高度
 			userInput.addEventListener('input', function() {
 				this.style.height = 'auto';
 				this.style.height = (this.scrollHeight) + 'px';

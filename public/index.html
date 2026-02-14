@@ -6,47 +6,38 @@
 		<title>Workers AI</title>
 		<style>
 			:root {
-				/* 深蓝色主题色 */
-				--primary-color: #1d4ed8;
-				--primary-hover: #1e40af;
-				/* 背景渐变加深 */
-				--bg-gradient: radial-gradient(circle at top right, #172554, #020617, #000000);
-				/* 毛玻璃效果背景 */
-				--glass-bg: rgba(15, 23, 42, 0.4);
-				--glass-border: rgba(255, 255, 255, 0.1);
-				--text-color: #f8fafc;
-				--text-light: #94a3b8;
-				--user-msg-bg: rgba(29, 78, 216, 0.6);
-				--assistant-msg-bg: rgba(30, 41, 59, 0.5);
-				--input-bg: rgba(0, 0, 0, 0.4);
+				--primary-color: #ffffff;
+				--primary-hover: #e0e0e0;
+				--bg-color: #000000;
+				--glass-bg: rgba(255, 255, 255, 0.05);
+				--glass-border: rgba(255, 255, 255, 0.12);
+				--glass-shine: rgba(255, 255, 255, 0.06);
+				--text-color: #ffffff;
+				--text-light: #888888;
+				--user-msg-bg: rgba(255, 255, 255, 0.95);
+				--user-msg-text: #000000;
+				--assistant-msg-bg: rgba(255, 255, 255, 0.07);
+				--input-bg: rgba(255, 255, 255, 0.06);
+				--send-btn-text: #000000;
+				--typing-color: #666666;
 			}
 
-			/* 浅色模式适配 - 彻底纯白风格 */
 			@media (prefers-color-scheme: light) {
 				:root {
-					--bg-gradient: #ffffff; /* 页面背景改为纯白 */
-					--glass-bg: #ffffff; /* 聊天框改为纯白 */
-					--glass-border: #ffffff; /* 容器边框改为纯白 */
-					--text-color: #0f172a;
-					--text-light: #64748b;
-					--user-msg-bg: #1d4ed8;
-					--assistant-msg-bg: #f8fafc; /* AI 气泡保持极浅灰色以区分 */
-					--input-bg: #ffffff; /* 输入框改为纯白 */
-				}
-				.user-message p { color: #ffffff; }
-				.chat-container {
-					border: 1px solid #f1f5f9; /* 使用极浅的灰色代替纯白边框，防止视觉消失 */
-					box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* 极弱的投影 */
-				}
-				.message-input {
-					background: #ffffff;
-					border-top: 1px solid #f1f5f9; /* 内部分割线设为极浅色 */
-				}
-				#user-input {
-					border: 1px solid #f1f5f9; /* 输入框边框 */
-				}
-				.assistant-message {
-					border: 1px solid #f1f5f9; /* AI 消息气泡边框 */
+					--primary-color: #000000;
+					--primary-hover: #222222;
+					--bg-color: #f0f0f0;
+					--glass-bg: rgba(255, 255, 255, 0.45);
+					--glass-border: rgba(0, 0, 0, 0.08);
+					--glass-shine: rgba(255, 255, 255, 0.6);
+					--text-color: #000000;
+					--text-light: #666666;
+					--user-msg-bg: rgba(0, 0, 0, 0.9);
+					--user-msg-text: #ffffff;
+					--assistant-msg-bg: rgba(255, 255, 255, 0.5);
+					--input-bg: rgba(255, 255, 255, 0.5);
+					--send-btn-text: #ffffff;
+					--typing-color: #999999;
 				}
 			}
 
@@ -56,14 +47,12 @@
 				padding: 0;
 			}
 
-			/* 深度清除所有输入控件装饰器 */
 			textarea, input {
 				-webkit-appearance: none !important;
 				-moz-appearance: none !important;
 				appearance: none !important;
 			}
 
-			/* 针对 Chrome/Safari/Edge 的计数器和手柄清除 */
 			::-webkit-resizer,
 			::-webkit-inner-spin-button,
 			::-webkit-outer-spin-button {
@@ -72,54 +61,129 @@
 				margin: 0 !important;
 			}
 
+			html, body {
+				height: 100%;
+				overflow: hidden;
+			}
+
 			body {
 				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 				line-height: 1.4;
 				color: var(--text-color);
-				background: var(--bg-gradient);
-				background-attachment: fixed;
-				max-width: 900px;
-				margin: 0 auto;
-				padding: 1rem;
-				height: 100vh;
+				background: var(--bg-color);
 				display: flex;
 				flex-direction: column;
 			}
 
-			header {
-				text-align: center;
-				margin-bottom: 1rem;
-				padding: 0.5rem 0;
+			/* Subtle animated background orbs for glass refraction — pure CSS, no JS */
+			body::before,
+			body::after {
+				content: '';
+				position: fixed;
+				border-radius: 50%;
+				filter: blur(100px);
+				opacity: 0.3;
+				z-index: 0;
+				will-change: transform;
+				pointer-events: none;
 			}
 
-			h1 {
-				font-size: 1.8rem;
-				color: #3b82f6;
-				font-weight: 700;
-				letter-spacing: -0.025em;
-				text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+			body::before {
+				width: 500px;
+				height: 500px;
+				background: #222;
+				top: -150px;
+				right: -100px;
+				animation: drift1 20s ease-in-out infinite alternate;
+			}
+
+			body::after {
+				width: 400px;
+				height: 400px;
+				background: #333;
+				bottom: -100px;
+				left: -100px;
+				animation: drift2 25s ease-in-out infinite alternate;
 			}
 
 			@media (prefers-color-scheme: light) {
-				h1 { text-shadow: none; } /* 浅色模式去掉文字阴影 */
+				body::before {
+					background: #c0c0c0;
+					opacity: 0.5;
+				}
+				body::after {
+					background: #d0d0d0;
+					opacity: 0.4;
+				}
 			}
 
-			header p {
-				color: var(--text-light);
-				font-size: 0.9rem;
+			@keyframes drift1 {
+				0% { transform: translate(0, 0) scale(1); }
+				100% { transform: translate(-80px, 80px) scale(1.15); }
+			}
+
+			@keyframes drift2 {
+				0% { transform: translate(0, 0) scale(1); }
+				100% { transform: translate(60px, -60px) scale(1.1); }
 			}
 
 			.chat-container {
 				display: flex;
 				flex-direction: column;
-				flex: 1;
+				width: 100%;
+				height: 100%;
+				position: relative;
+				z-index: 1;
 				background: var(--glass-bg);
-				backdrop-filter: blur(30px) saturate(150%);
-				-webkit-backdrop-filter: blur(30px) saturate(150%);
+				backdrop-filter: blur(40px) saturate(130%) brightness(1.05);
+				-webkit-backdrop-filter: blur(40px) saturate(130%) brightness(1.05);
 				border: 1px solid var(--glass-border);
-				border-radius: 24px;
 				overflow: hidden;
-				box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+				/* Liquid glass inner highlight */
+				box-shadow:
+					inset 0 1px 0 0 var(--glass-shine),
+					inset 0 -1px 0 0 rgba(0, 0, 0, 0.1);
+			}
+
+			/* Top glass reflection bar */
+			.chat-container::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				height: 50%;
+				background: linear-gradient(
+					180deg,
+					var(--glass-shine) 0%,
+					transparent 100%
+				);
+				pointer-events: none;
+				z-index: 0;
+			}
+
+			.chat-header {
+				text-align: center;
+				padding: 1rem 1rem 0.6rem;
+				position: relative;
+				z-index: 1;
+				border-bottom: 1px solid var(--glass-border);
+				background: var(--glass-bg);
+				backdrop-filter: blur(20px);
+				-webkit-backdrop-filter: blur(20px);
+			}
+
+			.chat-header h1 {
+				font-size: 1.4rem;
+				color: var(--text-color);
+				font-weight: 700;
+				letter-spacing: -0.025em;
+			}
+
+			.chat-header p {
+				color: var(--text-light);
+				font-size: 0.8rem;
+				margin-top: 0.15rem;
 			}
 
 			.chat-messages {
@@ -129,6 +193,22 @@
 				display: flex;
 				flex-direction: column;
 				gap: 0.8rem;
+				position: relative;
+				z-index: 1;
+			}
+
+			/* Minimal scrollbar */
+			.chat-messages::-webkit-scrollbar {
+				width: 4px;
+			}
+
+			.chat-messages::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			.chat-messages::-webkit-scrollbar-thumb {
+				background: rgba(128, 128, 128, 0.3);
+				border-radius: 4px;
 			}
 
 			.message {
@@ -149,7 +229,10 @@
 				background-color: var(--user-msg-bg);
 				align-self: flex-end;
 				border-bottom-right-radius: 4px;
-				border: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			.user-message p {
+				color: var(--user-msg-text);
 			}
 
 			.assistant-message {
@@ -157,15 +240,25 @@
 				align-self: flex-start;
 				border-bottom-left-radius: 4px;
 				border: 1px solid var(--glass-border);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+			}
+
+			.assistant-message p {
+				color: var(--text-color);
 			}
 
 			.message-input {
 				display: flex;
 				align-items: center;
-				padding: 1.2rem;
+				padding: 1rem 1.2rem;
 				gap: 0.8rem;
-				background: rgba(0, 0, 0, 0.25);
+				background: var(--glass-bg);
 				border-top: 1px solid var(--glass-border);
+				backdrop-filter: blur(20px);
+				-webkit-backdrop-filter: blur(20px);
+				position: relative;
+				z-index: 1;
 			}
 
 			#user-input {
@@ -176,24 +269,30 @@
 				border-radius: 16px;
 				color: var(--text-color);
 				font-family: inherit;
+				font-size: 0.95rem;
 				resize: none !important;
 				min-height: 44px;
 				max-height: 150px;
 				outline: none;
-				transition: all 0.2s;
+				transition: border-color 0.2s;
 				overflow: hidden;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+			}
+
+			#user-input::placeholder {
+				color: var(--text-light);
 			}
 
 			#user-input:focus {
 				border-color: var(--primary-color);
-				background-color: rgba(0, 0, 0, 0.05);
 			}
 
 			#send-button {
 				width: 44px;
 				height: 44px;
 				background-color: var(--primary-color);
-				color: white;
+				color: var(--send-btn-text);
 				border: none;
 				border-radius: 14px;
 				cursor: pointer;
@@ -204,48 +303,47 @@
 				flex-shrink: 0;
 			}
 
-			#send-button::before {
-				content: '';
-				width: 20px;
-				height: 20px;
-				background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='22' y1='2' x2='11' y2='13'%3E%3C/line%3E%3Cpolygon points='22 2 15 22 11 13 2 9 22 2'%3E%3C/polygon%3E%3C/svg%3E");
-				background-repeat: no-repeat;
-				background-position: center;
-			}
-
 			#send-button:hover {
 				background-color: var(--primary-hover);
 				transform: scale(1.05);
 			}
 
 			#send-button:disabled {
-				background-color: var(--text-light);
 				opacity: 0.3;
 				cursor: not-allowed;
+				transform: none;
 			}
 
 			.typing-indicator {
 				display: none;
 				font-size: 0.8rem;
 				font-style: italic;
-				color: var(--text-light);
+				color: var(--typing-color);
 				padding: 0.4rem 1.2rem;
+				position: relative;
+				z-index: 1;
 			}
 
 			.typing-indicator.visible {
 				display: block;
 			}
+
+			/* Safe area for mobile notches */
+			@supports (padding: env(safe-area-inset-bottom)) {
+				.message-input {
+					padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+				}
+			}
 		</style>
 	</head>
 	<body>
-		<header>
-			<h1>Cloudflare AI 助手</h1>
-			<p>基于 Cloudflare Workers AI 构建</p>
-		</header>
-
 		<div class="chat-container">
+			<div class="chat-header">
+				<h1>Cloudflare AI 助手</h1>
+				<p>基于 Cloudflare Workers AI 构建</p>
+			</div>
+
 			<div id="chat-messages" class="chat-messages">
-				<!-- 恢复初始欢迎消息 -->
 				<div class="message assistant-message">
 					<p>你好！我是基于 Cloudflare Workers AI 的聊天应用。今天有什么我可以帮你的吗？</p>
 				</div>
@@ -262,11 +360,15 @@
 					rows="1"
 					autofocus
 				></textarea>
-				<button id="send-button" title="发送"></button>
+				<button id="send-button" title="发送">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="22" y1="2" x2="11" y2="13"></line>
+						<polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+					</svg>
+				</button>
 			</div>
 		</div>
 
-		<!-- 引入逻辑脚本 -->
 		<script src="chat.js"></script>
 	</body>
 </html>

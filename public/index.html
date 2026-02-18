@@ -19,6 +19,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;l
 @keyframes d2{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(50px,-40px,0) scale(1.15)}to{transform:translate3d(30px,-70px,0) scale(1.05)}}
 @keyframes d3{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-30px,30px,0) scale(1.2)}to{transform:translate3d(20px,-20px,0) scale(.95)}}
 @media(max-width:768px){.o1{animation-duration:44s}.o2{animation-duration:56s}.o3{animation-duration:36s}}
+@media(max-width:200px){.o1,.o2,.o3{display:none}.theme-toggle{display:none}.chat-container::before,.chat-container::after{display:none}.chat-container{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--bg);border:none;box-shadow:none}.assistant-message{backdrop-filter:none;-webkit-backdrop-filter:none}.message-input{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--bg)}.input-wrapper{backdrop-filter:none;-webkit-backdrop-filter:none}.message{max-width:100%!important;padding:.4rem .6rem!important;border-radius:12px!important}.chat-messages{padding:.4rem!important;gap:.4rem!important}.message-input{padding:.3rem!important;gap:.3rem!important}#ui{font-size:16px!important;min-height:36px!important;padding:.5rem!important}.act-btn{width:36px!important;height:36px!important;border-radius:10px!important}.input-wrapper{border-radius:12px!important;padding:0 .3rem 0 0!important}.ai-icon{display:none!important}.md{font-size:.8rem!important}}
 @media(prefers-reduced-motion:reduce){.o1,.o2,.o3{animation:none!important}}
 .theme-toggle{position:fixed;top:.8rem;right:.8rem;z-index:10;width:40px;height:40px;border:1px solid var(--ti);border-radius:12px;background:var(--tb);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tc);box-shadow:inset 0 1px 0 0 var(--sh);transition:transform .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .theme-toggle:hover{transform:scale(1.08)}.theme-toggle:active{transform:scale(.95)}
@@ -83,7 +84,7 @@ html.light .theme-toggle .icon-sun{opacity:0;transform:rotate(90deg) scale(.5)}h
 <div class="typing" id="tp">AI 正在思考中...</div>
 <div class="message-input">
 <div class="input-wrapper">
-<textarea id="ui" placeholder="输入消息..." rows="1"></textarea>
+<input type="text" id="ui" placeholder="输入消息..." enterkeyhint="send" autocomplete="off" autocorrect="on"/>
 <div class="ai-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="3"/><line x1="9" y1="20" x2="9" y2="16"/><line x1="15" y1="20" x2="15" y2="16"/><line x1="6" y1="20" x2="18" y2="20"/><circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/></svg></div>
 </div>
 <button class="act-btn" id="stop" title="停止"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
@@ -93,11 +94,130 @@ html.light .theme-toggle .icon-sun{opacity:0;transform:rotate(90deg) scale(.5)}h
 <script>
 (function(){
 var E=function(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};
-function I(s){var c=[];s=s.replace(/`([^`\n]+?)`/g,function(_,x){c.push(x);return'\x00'+(c.length-1)+'\x00'});s=s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img src="$2" alt="$1" loading="lazy">');s=s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');s=s.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');s=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');s=s.replace(/__(.+?)__/g,'<strong>$1</strong>');s=s.replace(/\*(.+?)\*/g,'<em>$1</em>');s=s.replace(/_(.+?)_/g,'<em>$1</em>');s=s.replace(/~~(.+?)~~/g,'<del>$1</del>');s=s.replace(/  \n/g,'<br>');return s.replace(/\x00(\d+)\x00/g,function(_,i){return'<code>'+E(c[+i])+'</code>'})}
+
+function I(s){
+var c=[];
+s=s.replace(/`([^`\n]+?)`/g,function(_,x){c.push(x);return'\x00'+(c.length-1)+'\x00'});
+s=s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img src="$2" alt="$1" loading="lazy">');
+s=s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+s=s.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+s=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+s=s.replace(/__(.+?)__/g,'<strong>$1</strong>');
+s=s.replace(/\*([^\s*].*?[^\s*])\*/g,'<em>$1</em>');
+s=s.replace(/\*([^\s*])\*/g,'<em>$1</em>');
+s=s.replace(/_([^\s_].*?[^\s_])_/g,'<em>$1</em>');
+s=s.replace(/_([^\s_])_/g,'<em>$1</em>');
+s=s.replace(/~~(.+?)~~/g,'<del>$1</del>');
+s=s.replace(/  \n/g,'<br>');
+return s.replace(/\x00(\d+)\x00/g,function(_,i){return'<code>'+E(c[+i])+'</code>'});
+}
+
 function sr(l){l=l.trim();if(l[0]==='|')l=l.slice(1);if(l[l.length-1]==='|')l=l.slice(0,-1);return l.split('|')}
-function PT(ls){if(ls.length<2)return null;var h=sr(ls[0]),sp=ls[1];if(!/^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/.test(sp))return null;var a=sr(sp).map(function(c){c=c.trim();return c[0]===':'&&c[c.length-1]===':'?'center':c[c.length-1]===':'?'right':'left'});var o='<div class="tw"><table><thead><tr>';h.forEach(function(c,i){o+='<th style="text-align:'+(a[i]||'left')+'">'+I(c.trim())+'</th>'});o+='</tr></thead><tbody>';for(var r=2;r<ls.length;r++){var cl=sr(ls[r]);o+='<tr>';cl.forEach(function(c,i){o+='<td style="text-align:'+(a[i]||'left')+'">'+I(c.trim())+'</td>'});o+='</tr>'}return o+'</tbody></table></div>'}
-function PL(ls,i,t){var o='<'+t+'>',p=t==='ul'?/^(\s*)[-*+]\s(.*)/:/^(\s*)\d+[.)]\s(.*)/;while(i<ls.length){var m=ls[i].match(p);if(!m)break;var c=m[2],tk=c.match(/^\[([ xX])\]\s*(.*)/);if(tk)o+='<li class="task"><input type="checkbox" disabled '+(tk[1]!==' '?'checked':'')+'>'+I(tk[2])+'</li>';else o+='<li>'+I(c)+'</li>';i++;while(i<ls.length&&/^\s+/.test(ls[i])&&!p.test(ls[i])&&ls[i].trim())i++}return o+'</'+t+'>'}
-function P(src){if(!src)return'';var ls=src.replace(/\r\n/g,'\n').split('\n'),o='',i=0,n=ls.length;while(i<n){var l=ls[i],fm=l.match(/^```(\w*)/);if(fm){var ln=fm[1]||'CODE',cd=[];i++;while(i<n&&!/^```\s*$/.test(ls[i])){cd.push(ls[i]);i++}if(i<n)i++;o+='<pre><div class="ch"><span class="cl">'+E(ln)+'</span><button class="cb" onclick="CC(this)">Copy</button></div><code>'+E(cd.join('\n'))+'</code></pre>';continue}if(i+1<n&&/^\|?.+\|.+\|?$/.test(l)&&/^\|?\s*:?-+:?/.test(ls[i+1])){var tl=[l],j=i+1;while(j<n&&/^\|?.+\|/.test(ls[j])){tl.push(ls[j]);j++}var th=PT(tl);if(th){o+=th;i=j;continue}}var hm=l.match(/^(#{1,6})\s+(.+)/);if(hm){o+='<h'+hm[1].length+'>'+I(hm[2].replace(/\s*#+\s*$/,''))+'</h'+hm[1].length+'>';i++;continue}if(/^(\*\*\*|---|___)\s*$/.test(l.trim())){o+='<hr>';i++;continue}if(/^>\s?/.test(l)){var bq=[];while(i<n&&/^>\s?/.test(ls[i])){bq.push(ls[i].replace(/^>\s?/,''));i++}o+='<blockquote>'+P(bq.join('\n'))+'</blockquote>';continue}if(/^\s*[-*+]\s/.test(l)){o+=PL(ls,i,'ul');while(i<n&&(/^\s*[-*+]\s/.test(ls[i])||(/^\s+/.test(ls[i])&&ls[i].trim())))i++;continue}if(/^\s*\d+[.)]\s/.test(l)){o+=PL(ls,i,'ol');while(i<n&&(/^\s*\d+[.)]\s/.test(ls[i])||(/^\s+/.test(ls[i])&&ls[i].trim())))i++;continue}if(!l.trim()){i++;continue}var pa=[];while(i<n&&ls[i].trim()&&!/^```/.test(ls[i])&&!/^#{1,6}\s/.test(ls[i])&&!/^>\s?/.test(ls[i])&&!/^[-*+]\s/.test(ls[i].trim())&&!/^\d+[.)]\s/.test(ls[i].trim())&&!/^(\*\*\*|---|___)\s*$/.test(ls[i].trim())&&!(i+1<n&&/^\|?.+\|.+\|?$/.test(ls[i])&&/^\|?\s*:?-+:?/.test(ls[i+1]))){pa.push(ls[i]);i++}if(pa.length)o+='<p>'+I(pa.join('\n'))+'</p>'}return o}
+
+function PT(ls){
+if(ls.length<2)return null;
+var h=sr(ls[0]),sp=ls[1];
+if(!/^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/.test(sp))return null;
+var a=sr(sp).map(function(c){c=c.trim();return c[0]===':'&&c[c.length-1]===':'?'center':c[c.length-1]===':'?'right':'left'});
+var o='<div class="tw"><table><thead><tr>';
+h.forEach(function(c,i){o+='<th style="text-align:'+(a[i]||'left')+'">'+I(c.trim())+'</th>'});
+o+='</tr></thead><tbody>';
+for(var r=2;r<ls.length;r++){var cl=sr(ls[r]);o+='<tr>';cl.forEach(function(c,i){o+='<td style="text-align:'+(a[i]||'left')+'">'+I(c.trim())+'</td>'});o+='</tr>'}
+return o+'</tbody></table></div>';
+}
+
+function PL(ls,i,t){
+var o='<'+t+'>',p=t==='ul'?/^(\s*)[-*+]\s(.*)/:/^(\s*)\d+[.)]\s(.*)/;
+while(i<ls.length){
+var m=ls[i].match(p);if(!m)break;
+var c=m[2]||'',tk=c.match(/^\[([ xX])\]\s*(.*)/);
+if(tk)o+='<li class="task"><input type="checkbox" disabled '+(tk[1]!==' '?'checked':'')+'>'+I(tk[2]||'')+'</li>';
+else o+='<li>'+I(c)+'</li>';
+i++;
+while(i<ls.length&&/^\s+/.test(ls[i])&&!p.test(ls[i])&&ls[i].trim())i++;
+}
+return o+'</'+t+'>';
+}
+
+/* Safe streaming parser — handles incomplete markdown mid-generation */
+function P(src){
+if(!src)return'';
+try{
+var ls=src.replace(/\r\n/g,'\n').split('\n'),o='',i=0,n=ls.length,guard=0,maxIter=n*3+100;
+while(i<n){
+if(++guard>maxIter)break;
+var l=ls[i];
+if(l==null){i++;continue}
+
+// Fenced code block
+var fm=l.match(/^```(\w*)/);
+if(fm){
+var ln=fm[1]||'CODE',cd=[];i++;
+while(i<n&&ls[i]!=null&&!/^```\s*$/.test(ls[i])){cd.push(ls[i]);i++;if(i-guard>n)break}
+if(i<n)i++;
+o+='<pre><div class="ch"><span class="cl">'+E(ln)+'</span><button class="cb" onclick="CC(this)">Copy</button></div><code>'+E(cd.join('\n'))+'</code></pre>';
+continue;
+}
+
+// Table
+if(i+1<n&&ls[i+1]!=null&&/^\|?.+\|.+\|?$/.test(l)&&/^\|?\s*:?-+:?/.test(ls[i+1])){
+var tl=[l],j=i+1;
+while(j<n&&ls[j]!=null&&/^\|?.+\|/.test(ls[j])){tl.push(ls[j]);j++}
+var th=PT(tl);
+if(th){o+=th;i=j;continue}
+}
+
+// Heading
+var hm=l.match(/^(#{1,6})\s+(.+)/);
+if(hm){o+='<h'+hm[1].length+'>'+I(hm[2].replace(/\s*#+\s*$/,''))+'</h'+hm[1].length+'>';i++;continue}
+
+// HR
+if(/^(\*\*\*|---|___)\s*$/.test(l.trim())){o+='<hr>';i++;continue}
+
+// Blockquote
+if(/^>\s?/.test(l)){
+var bq=[];
+while(i<n&&ls[i]!=null&&/^>\s?/.test(ls[i])){bq.push(ls[i].replace(/^>\s?/,''));i++}
+o+='<blockquote>'+P(bq.join('\n'))+'</blockquote>';
+continue;
+}
+
+// Unordered list
+if(/^\s*[-*+]\s/.test(l)){
+var li=i;
+o+=PL(ls,i,'ul');
+while(i<n&&(/^\s*[-*+]\s/.test(ls[i])||(/^\s+/.test(ls[i])&&ls[i].trim())))i++;
+if(i===li)i++;
+continue;
+}
+
+// Ordered list
+if(/^\s*\d+[.)]\s/.test(l)){
+var li2=i;
+o+=PL(ls,i,'ol');
+while(i<n&&(/^\s*\d+[.)]\s/.test(ls[i])||(/^\s+/.test(ls[i])&&ls[i].trim())))i++;
+if(i===li2)i++;
+continue;
+}
+
+// Empty line
+if(!l.trim()){i++;continue}
+
+// Paragraph
+var pa=[],pi=i;
+while(i<n&&ls[i]!=null&&ls[i].trim()&&!/^```/.test(ls[i])&&!/^#{1,6}\s/.test(ls[i])&&!/^>\s?/.test(ls[i])&&!/^[-*+]\s/.test((ls[i]||'').trim())&&!/^\d+[.)]\s/.test((ls[i]||'').trim())&&!/^(\*\*\*|---|___)\s*$/.test((ls[i]||'').trim())&&!(i+1<n&&ls[i+1]!=null&&/^\|?.+\|.+\|?$/.test(ls[i])&&/^\|?\s*:?-+:?/.test(ls[i+1]))){
+pa.push(ls[i]);i++;
+}
+if(i===pi)i++;
+if(pa.length)o+='<p>'+I(pa.join('\n'))+'</p>';
+}
+return o;
+}catch(e){
+// Fallback: if parser crashes on partial content, render as escaped HTML
+return'<p>'+E(src).replace(/\n/g,'<br>')+'</p>';
+}
+}
+
 window.renderMarkdown=P;
 window.CC=function(b){var t=b.closest('pre').querySelector('code').textContent;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copied!';b.classList.add('ok');setTimeout(function(){b.textContent='Copy';b.classList.remove('ok')},1500)}).catch(function(){try{var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);b.textContent='Copied!';b.classList.add('ok');setTimeout(function(){b.textContent='Copy';b.classList.remove('ok')},1500)}catch(e){}})};
 
@@ -112,15 +232,10 @@ if(window.visualViewport){var vv=window.visualViewport;function vc(){if(vf)retur
 var orbs=document.querySelectorAll('.o');document.addEventListener('visibilitychange',function(){for(var i=0;i<orbs.length;i++)orbs[i].style.animationPlayState=document.hidden?'paused':'running'});
 
 var ui=document.getElementById('ui'),sb=document.getElementById('send'),xb=document.getElementById('stop'),tp=document.getElementById('tp');
-var hist=[],queue=[],gen=false,ac=null,se=null,st='',rf=null,dirty=false;
+var hist=[],queue=[],gen=false,ac=null,se=null,st='',rf=null,dirty=false,fin_lock=false;
+var isWatch=navigator.userAgent.indexOf('Watch')!==-1||(window.screen&&window.screen.width<220&&window.screen.height<220);
 
-// Detect small screen / watch-sized device
-var isSmallScreen=window.screen&&(window.screen.width<200||window.screen.height<200);
-// Detect if keyboard was already open before sending
-var kbWasOpen=false;
-
-ui.addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,150)+'px'});
-ui.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();qm()}});
+ui.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.isComposing){e.preventDefault();qm()}});
 sb.addEventListener('click',function(e){e.preventDefault();qm()});
 xb.addEventListener('click',ax);
 
@@ -128,51 +243,98 @@ function mkMsg(cls,html){var d=document.createElement('div');d.className='messag
 
 function qm(){
 var t=ui.value.trim();if(!t)return;
-
-// Check if input was focused (keyboard open) before clearing
-kbWasOpen=document.activeElement===ui;
-
 mkMsg('user-message','<p>'+E(t).replace(/\n/g,'<br>')+'</p>');
 hist.push({role:'user',content:t});
-ui.value='';ui.style.height='auto';
-
-// On small screens (Apple Watch / tiny devices): blur to dismiss keyboard after send
-// On normal phones/tablets: keep focus so user can keep typing
-if(isSmallScreen){
-	ui.blur();
-} else if(kbWasOpen){
-	// Keep focus — don't call .focus() again as it's already focused
-	// This prevents keyboard re-trigger on devices where blur+focus cycles
-}
-
+ui.value='';
+if(isWatch){ui.blur();setTimeout(function(){ui.focus()},80)}
 if(gen){queue.push(1)}else run();
 }
 
-function ax(){if(ac){ac.abort();ac=null}fin()}
+function ax(){if(ac){try{ac.abort()}catch(e){}}fin()}
 
 function run(){
 if(gen)return;gen=true;sb.disabled=true;xb.classList.add('on');tp.classList.add('on');
 se=mkMsg('assistant-message','<p>...</p>');st='';
+
 ac=new AbortController();
-fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist}),signal:ac.signal}).then(function(r){
+var signal=ac.signal;
+var stopped=false;
+
+fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist}),signal:signal}).then(function(r){
 if(!r.ok)throw new Error('HTTP '+r.status);
+if(!r.body||!r.body.getReader){
+// Non-streaming response fallback
+return r.json().then(function(j){
+if(j.response)st=j.response;
+else if(j.choices&&j.choices[0]){var m=j.choices[0].message||j.choices[0].delta;if(m)st=m.content||''}
+fr();fin();
+});
+}
 var rd=r.body.getReader(),dc=new TextDecoder(),buf='';
-function pump(){return rd.read().then(function(res){
+function pump(){
+if(stopped)return;
+return rd.read().then(function(res){
+if(stopped)return;
 if(res.done){fr();fin();return}
-buf+=dc.decode(res.value,{stream:true});var ps=buf.split('\n');buf=ps.pop()||'';
-for(var i=0;i<ps.length;i++){var ln=ps[i].trim();if(!ln)continue;if(ln==='data: [DONE]'){fr();fin();return}
-if(ln.indexOf('data: ')===0){try{var j=JSON.parse(ln.slice(6)),d=j.choices&&j.choices[0]&&j.choices[0].delta;if(d&&d.content){st+=d.content;sr2()}}catch(e){if(j&&j.response){st=j.response;sr2()}}}}
-return pump()})}return pump();
-}).catch(function(e){if(e.name!=='AbortError'){st=st||'抱歉，发生了错误: '+e.message}fr();fin()});
+try{
+buf+=dc.decode(res.value,{stream:true});
+var ps=buf.split('\n');buf=ps.pop()||'';
+for(var i=0;i<ps.length;i++){
+var ln=ps[i].trim();
+if(!ln)continue;
+if(ln==='data: [DONE]'){fr();fin();return}
+if(ln.indexOf('data: ')===0){
+try{
+var j=JSON.parse(ln.slice(6));
+var d=j.choices&&j.choices[0]&&j.choices[0].delta;
+if(d&&d.content!=null)st+=d.content;
+else if(j.response!=null)st=j.response;
+}catch(pe){}
+}
+}
+sr2();
+}catch(de){sr2()}
+return pump();
+}).catch(function(e){
+if(!stopped){
+if(e.name!=='AbortError')st=st||'抱歉，发生了错误: '+e.message;
+fr();fin();
+}
+});
+}
+return pump();
+}).catch(function(e){
+if(!stopped){
+if(e.name!=='AbortError')st=st||'抱歉，发生了错误: '+e.message;
+fr();fin();
+}
+});
+
+// Tie stopped flag to abort
+signal.addEventListener('abort',function(){stopped=true});
 }
 
 function sr2(){if(dirty)return;dirty=true;if(!rf)rf=requestAnimationFrame(function(){rf=null;fr()})}
-function fr(){dirty=false;if(se&&st){se.innerHTML=P(st);var d=ml.scrollHeight-ml.scrollTop-ml.clientHeight;if(d<150)ml.scrollTop=ml.scrollHeight}}
+function fr(){
+dirty=false;
+if(!se)return;
+try{
+if(st)se.innerHTML=P(st);
+var d=ml.scrollHeight-ml.scrollTop-ml.clientHeight;
+if(d<150)ml.scrollTop=ml.scrollHeight;
+}catch(e){
+se.innerHTML='<p>'+E(st).replace(/\n/g,'<br>')+'</p>';
+}
+}
 
 function fin(){
-gen=false;sb.disabled=false;xb.classList.remove('on');tp.classList.remove('on');ac=null;
+if(fin_lock)return;fin_lock=true;
+gen=false;sb.disabled=false;xb.classList.remove('on');tp.classList.remove('on');
+try{ac=null}catch(e){}
 if(st)hist.push({role:'assistant',content:st});
-se=null;st='';if(rf){cancelAnimationFrame(rf);rf=null}dirty=false;
+se=null;st='';
+if(rf){try{cancelAnimationFrame(rf)}catch(e){}rf=null}
+dirty=false;fin_lock=false;
 if(queue.length){queue=[];run()}
 }
 

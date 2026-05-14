@@ -250,12 +250,7 @@
           if(gen){queue.push(1)}else run();
         }
 
-        function ax(){
-          if(ac){try{ac.abort()}catch(e){}}
-          // Force render any partial content before cleaning up
-          ffr();
-          fin();
-        }
+        function ax(){if(ac){try{ac.abort()}catch(e){}}fin()}
 
         function processBuf(buf){
           var lines=buf.split('\n');
@@ -322,11 +317,7 @@
                     }
                   }
                   sr2();
-                }catch(de){
-                  // If decoding/processing fails, stop gracefully instead of looping
-                  st=st||'抱歉，处理响应时发生了错误。';
-                  ffr();fin();return;
-                }
+                }catch(de){sr2()}
                 return pump();
               }).catch(function(e){
                 if(!stopped){

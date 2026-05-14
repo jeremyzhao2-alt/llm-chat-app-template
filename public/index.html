@@ -139,7 +139,6 @@
           return o+'</'+t+'>';
         }
 
-        /* Safe streaming parser — handles incomplete markdown mid-generation */
         function P(src){
           if(!src)return'';
           try{
@@ -149,7 +148,6 @@
               var l=ls[i];
               if(l==null){i++;continue}
 
-              // Fenced code block
               var fm=l.match(/^```(\w*)/);
               if(fm){
                 var ln=fm[1]||'CODE',cd=[];i++;
@@ -159,7 +157,6 @@
                 continue;
               }
 
-              // Table
               if(i+1<n&&ls[i+1]!=null&&/^\|?.+\|.+\|?$/.test(l)&&/^\|?\s*:?-+:?/.test(ls[i+1])){
                 var tl=[l],j=i+1;
                 while(j<n&&ls[j]!=null&&/^\|?.+\|/.test(ls[j])){tl.push(ls[j]);j++}
@@ -167,14 +164,11 @@
                 if(th){o+=th;i=j;continue}
               }
 
-              // Heading
               var hm=l.match(/^(#{1,6})\s+(.+)/);
               if(hm){o+='<h'+hm[1].length+'>'+I(hm[2].replace(/\s*#+\s*$/,''))+'</h'+hm[1].length+'>';i++;continue}
 
-              // HR
               if(/^(\*\*\*|---|___)\s*$/.test(l.trim())){o+='<hr>';i++;continue}
 
-              // Blockquote
               if(/^>\s?/.test(l)){
                 var bq=[];
                 while(i<n&&ls[i]!=null&&/^>\s?/.test(ls[i])){bq.push(ls[i].replace(/^>\s?/,''));i++}
@@ -182,7 +176,6 @@
                 continue;
               }
 
-              // Unordered list
               if(/^\s*[-*+]\s/.test(l)){
                 var li=i;
                 o+=PL(ls,i,'ul');
@@ -191,7 +184,6 @@
                 continue;
               }
 
-              // Ordered list
               if(/^\s*\d+[.)]\s/.test(l)){
                 var li2=i;
                 o+=PL(ls,i,'ol');
@@ -200,10 +192,8 @@
                 continue;
               }
 
-              // Empty line
               if(!l.trim()){i++;continue}
 
-              // Paragraph
               var pa=[],pi=i;
               while(i<n&&ls[i]!=null&&ls[i].trim()&&!/^```/.test(ls[i])&&!/^#{1,6}\s/.test(ls[i])&&!/^>\s?/.test(ls[i])&&!/^[-*+]\s/.test((ls[i]||'').trim())&&!/^\d+[.)]\s/.test((ls[i]||'').trim())&&!/^(\*\*\*|---|___)\s*$/.test((ls[i]||'').trim())&&!(i+1<n&&ls[i+1]!=null&&/^\|?.+\|.+\|?$/.test(ls[i])&&/^\|?\s*:?-+:?/.test(ls[i+1]))){
                 pa.push(ls[i]);i++;
@@ -213,7 +203,6 @@
             }
             return o;
           }catch(e){
-            // Fallback: if parser crashes on partial content, render as escaped HTML
             return'<p>'+E(src).replace(/\n/g,'<br>')+'</p>';
           }
         }
@@ -257,95 +246,151 @@
           for(var i=0;i<lines.length;i++){
             var ln=lines[i].trim();
             if(!ln)continue;
+
             if(ln==='data: [DONE]')continue;
+
             if(ln.indexOf('data: ')===0){
               try{
-                var j=JSON.parse(ln.slice(6));
-                var d=j.choices&&j.choices[0]&&j.choices[0].delta;
-                if(d&&d.content!=null)st+=d.content;
-                else if(j.response!=null)st=j.response;
+                var data=ln.slice(6);
+
+                if(!data||data==='[DONE]')continue;
+
+                var j=JSON.parse(data);
+
+                if(j.error){
+                  st+='\\n错误: '+(j.error.message||j.error);
+                  continue;
+                }
+
+                if(j.response!=null){
+                  st+=j.response;
+                  continue;
+                }
+
+                var ch=j.choices&&j.choices[0];
+
+                if(ch){
+                  if(ch.delta&&typeof ch.delta.content==='string'){
+                    st+=ch.delta.content;
+                  }else if(ch.message&&typeof ch.message.content==='string'){
+                    st+=ch.message.content;
+                  }else if(typeof ch.text==='string'){
+                    st+=ch.text;
+                  }
+                }
               }catch(pe){}
             }
           }
         }
 
         function run(){
-          if(gen)return;gen=true;sb.disabled=true;xb.classList.add('on');tp.classList.add('on');
-          se=mkMsg('assistant-message','<p>...</p>');st='';
+          if(gen)return;
+          gen=true;
+          sb.disabled=true;
+          xb.classList.add('on');
+          tp.classList.add('on');
+
+          se=mkMsg('assistant-message','<p>...</p>');
+          st='';
 
           ac=new AbortController();
           var signal=ac.signal;
           var stopped=false;
 
-          fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist}),signal:signal}).then(function(r){
+          fetch('/api/chat',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({messages:hist}),
+            signal:signal
+          }).then(function(r){
+
             if(!r.ok)throw new Error('HTTP '+r.status);
+
             if(!r.body||!r.body.getReader){
-              // Non-streaming response fallback
               return r.json().then(function(j){
-                if(j.response)st=j.response;
-                else if(j.choices&&j.choices[0]){var m=j.choices[0].message||j.choices[0].delta;if(m)st=m.content||''}
-                ffr();fin();
+                processBuf('data: '+JSON.stringify(j));
+                ffr();
+                fin();
               });
             }
-            var rd=r.body.getReader(),dc=new TextDecoder(),buf='';
+
+            var rd=r.body.getReader();
+            var dc=new TextDecoder();
+            var buf='';
+
             function pump(){
-              if(stopped)return;
+              if(stopped)return Promise.resolve();
+
               return rd.read().then(function(res){
-                if(stopped)return;
+
+                if(stopped)return Promise.resolve();
+
                 if(res.done){
-                  // Process any remaining data in buffer
+
                   if(buf.trim()){
                     processBuf(buf);
                     buf='';
                   }
-                  ffr();fin();return;
+
+                  ffr();
+                  fin();
+                  return Promise.resolve();
                 }
-                try{
-                  buf+=dc.decode(res.value,{stream:true});
-                  var ps=buf.split('\n');buf=ps.pop()||'';
-                  for(var i=0;i<ps.length;i++){
-                    var ln=ps[i].trim();
-                    if(!ln)continue;
-                    if(ln==='data: [DONE]'){ffr();fin();return}
-                    if(ln.indexOf('data: ')===0){
-                      try{
-                        var j=JSON.parse(ln.slice(6));
-                        var d=j.choices&&j.choices[0]&&j.choices[0].delta;
-                        if(d&&d.content!=null)st+=d.content;
-                        else if(j.response!=null)st=j.response;
-                      }catch(pe){}
-                    }
-                  }
-                  sr2();
-                }catch(de){sr2()}
+
+                buf+=dc.decode(res.value,{stream:true});
+
+                var parts=buf.split('\n');
+                buf=parts.pop()||'';
+
+                for(var i=0;i<parts.length;i++){
+                  processBuf(parts[i]);
+                }
+
+                sr2();
+
                 return pump();
+
               }).catch(function(e){
-                if(!stopped){
-                  // Process any remaining data in buffer
-                  if(buf.trim()){
-                    processBuf(buf);
-                    buf='';
-                  }
-                  if(e.name!=='AbortError')st=st||'抱歉，发生了错误: '+e.message;
-                  ffr();fin();
+
+                if(stopped)return Promise.resolve();
+
+                if(buf.trim()){
+                  processBuf(buf);
+                  buf='';
                 }
+
+                if(e.name!=='AbortError'&&!st){
+                  st='抱歉，发生了错误: '+e.message;
+                }
+
+                ffr();
+                fin();
+
+                return Promise.resolve();
               });
             }
+
             return pump();
+
           }).catch(function(e){
-            if(!stopped){
-              if(e.name!=='AbortError')st=st||'抱歉，发生了错误: '+e.message;
-              ffr();fin();
+
+            if(stopped)return;
+
+            if(e.name!=='AbortError'&&!st){
+              st='抱歉，发生了错误: '+e.message;
             }
+
+            ffr();
+            fin();
           });
 
-          // Tie stopped flag to abort
-          signal.addEventListener('abort',function(){stopped=true});
+          signal.addEventListener('abort',function(){
+            stopped=true;
+          });
         }
 
         function sr2(){if(dirty)return;dirty=true;if(!rf)rf=requestAnimationFrame(function(){rf=null;fr()})}
 
-        /* Final forced render — cancels any pending RAF and renders synchronously */
         function ffr(){
           if(rf){try{cancelAnimationFrame(rf)}catch(e){}rf=null}
           dirty=false;
@@ -356,7 +401,7 @@
           dirty=false;
           if(!se)return;
           try{
-            if(st)se.innerHTML=P(st);
+            if(st&&st.trim())se.innerHTML=P(st);
             var d=ml.scrollHeight-ml.scrollTop-ml.clientHeight;
             if(d<150)ml.scrollTop=ml.scrollHeight;
           }catch(e){
@@ -365,14 +410,32 @@
         }
 
         function fin(){
-          if(fin_lock)return;fin_lock=true;
-          gen=false;sb.disabled=false;xb.classList.remove('on');tp.classList.remove('on');
+          if(fin_lock)return;
+          fin_lock=true;
+
+          gen=false;
+          sb.disabled=false;
+          xb.classList.remove('on');
+          tp.classList.remove('on');
+
           try{ac=null}catch(e){}
-          if(st)hist.push({role:'assistant',content:st});
-          se=null;st='';
+
+          if(st&&st.trim()){
+            hist.push({role:'assistant',content:st});
+          }
+
+          se=null;
+          st='';
+
           if(rf){try{cancelAnimationFrame(rf)}catch(e){}rf=null}
-          dirty=false;fin_lock=false;
-          if(queue.length){queue=[];run()}
+
+          dirty=false;
+          fin_lock=false;
+
+          if(queue.length){
+            queue=[];
+            setTimeout(run,0);
+          }
         }
 
         window.addAssistantMessage=function(t){return mkMsg('assistant-message',P(t))};

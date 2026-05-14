@@ -232,7 +232,7 @@
         var orbs=document.querySelectorAll('.o');document.addEventListener('visibilitychange',function(){for(var i=0;i<orbs.length;i++)orbs[i].style.animationPlayState=document.hidden?'paused':'running'});
 
         var ui=document.getElementById('ui'),sb=document.getElementById('send'),xb=document.getElementById('stop'),tp=document.getElementById('tp');
-        var hist=[],queue=[],gen=false,ac=null,se=null,st='',rf=null,dirty=false,fin_lock=false,timeoutId=null;
+        var hist=[],queue=[],gen=false,ac=null,se=null,st='',rf=null,dirty=false,fin_lock=false;
         var isWatch=navigator.userAgent.indexOf('Watch')!==-1||(window.screen&&window.screen.width<220&&window.screen.height<220);
 
         ui.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.isComposing){e.preventDefault();qm()}});
@@ -251,13 +251,9 @@
         }
 
         function ax(){
-          if(ac){
-            try{ac.abort()}catch(e){}
-          }
-          if(timeoutId){
-            clearTimeout(timeoutId);
-            timeoutId=null;
-          }
+          if(ac){try{ac.abort()}catch(e){}}
+          // Force render any partial content before cleaning up
+          ffr();
           fin();
         }
 
@@ -279,56 +275,23 @@
         }
 
         function run(){
-          if(gen)return;
-          gen=true;
-          sb.disabled=true;
-          xb.classList.add('on');
-          tp.classList.add('on');
-          se=mkMsg('assistant-message','<p>...</p>');
-          st='';
+          if(gen)return;gen=true;sb.disabled=true;xb.classList.add('on');tp.classList.add('on');
+          se=mkMsg('assistant-message','<p>...</p>');st='';
 
           ac=new AbortController();
           var signal=ac.signal;
           var stopped=false;
-          var hasReceivedData=false;
 
-          // Set a timeout to prevent hanging
-          timeoutId=setTimeout(function(){
-            if(!hasReceivedData&&!stopped){
-              try{ac.abort()}catch(e){}
-              if(!st)st='抱歉，请求超时，请稍后重试。';
-              ffr();
-              fin();
-            }
-          },30000);
-
-          fetch('/api/chat',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({messages:hist}),
-            signal:signal
-          }).then(function(r){
+          fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist}),signal:signal}).then(function(r){
             if(!r.ok)throw new Error('HTTP '+r.status);
             if(!r.body||!r.body.getReader){
               // Non-streaming response fallback
               return r.json().then(function(j){
-                hasReceivedData=true;
                 if(j.response)st=j.response;
-                else if(j.choices&&j.choices[0]){
-                  var m=j.choices[0].message||j.choices[0].delta;
-                  if(m)st=m.content||'';
-                }
-                if(!st)st='抱歉，未能获取到有效回复。';
-                ffr();
-                fin();
-              }).catch(function(e){
-                hasReceivedData=true;
-                if(!st)st='抱歉，发生了错误: '+e.message;
-                ffr();
-                fin();
+                else if(j.choices&&j.choices[0]){var m=j.choices[0].message||j.choices[0].delta;if(m)st=m.content||''}
+                ffr();fin();
               });
             }
-            hasReceivedData=true;
             var rd=r.body.getReader(),dc=new TextDecoder(),buf='';
             function pump(){
               if(stopped)return;
@@ -340,23 +303,15 @@
                     processBuf(buf);
                     buf='';
                   }
-                  if(!st)st='抱歉，未收到有效回复。';
-                  ffr();
-                  fin();
-                  return;
+                  ffr();fin();return;
                 }
                 try{
                   buf+=dc.decode(res.value,{stream:true});
-                  var ps=buf.split('\n');
-                  buf=ps.pop()||'';
+                  var ps=buf.split('\n');buf=ps.pop()||'';
                   for(var i=0;i<ps.length;i++){
                     var ln=ps[i].trim();
                     if(!ln)continue;
-                    if(ln==='data: [DONE]'){
-                      ffr();
-                      fin();
-                      return;
-                    }
+                    if(ln==='data: [DONE]'){ffr();fin();return}
                     if(ln.indexOf('data: ')===0){
                       try{
                         var j=JSON.parse(ln.slice(6));
@@ -368,7 +323,9 @@
                   }
                   sr2();
                 }catch(de){
-                  sr2();
+                  // If decoding/processing fails, stop gracefully instead of looping
+                  st=st||'抱歉，处理响应时发生了错误。';
+                  ffr();fin();return;
                 }
                 return pump();
               }).catch(function(e){
@@ -378,46 +335,28 @@
                     processBuf(buf);
                     buf='';
                   }
-                  if(e.name!=='AbortError'){
-                    if(!st)st='抱歉，发生了错误: '+e.message;
-                  }
-                  ffr();
-                  fin();
+                  if(e.name!=='AbortError')st=st||'抱歉，发生了错误: '+e.message;
+                  ffr();fin();
                 }
               });
             }
             return pump();
           }).catch(function(e){
             if(!stopped){
-              if(e.name!=='AbortError'){
-                if(!st)st='抱歉，发生了错误: '+e.message;
-              }
-              ffr();
-              fin();
+              if(e.name!=='AbortError')st=st||'抱歉，发生了错误: '+e.message;
+              ffr();fin();
             }
           });
 
           // Tie stopped flag to abort
-          signal.addEventListener('abort',function(){
-            stopped=true;
-          });
+          signal.addEventListener('abort',function(){stopped=true});
         }
 
-        function sr2(){
-          if(dirty)return;
-          dirty=true;
-          if(!rf)rf=requestAnimationFrame(function(){
-            rf=null;
-            fr();
-          });
-        }
+        function sr2(){if(dirty)return;dirty=true;if(!rf)rf=requestAnimationFrame(function(){rf=null;fr()})}
 
         /* Final forced render — cancels any pending RAF and renders synchronously */
         function ffr(){
-          if(rf){
-            try{cancelAnimationFrame(rf)}catch(e){}
-            rf=null;
-          }
+          if(rf){try{cancelAnimationFrame(rf)}catch(e){}rf=null}
           dirty=false;
           fr();
         }
@@ -427,49 +366,22 @@
           if(!se)return;
           try{
             if(st)se.innerHTML=P(st);
-            else se.innerHTML='<p>...</p>';
             var d=ml.scrollHeight-ml.scrollTop-ml.clientHeight;
             if(d<150)ml.scrollTop=ml.scrollHeight;
           }catch(e){
-            se.innerHTML='<p>'+E(st||'...').replace(/\n/g,'<br>')+'</p>';
+            se.innerHTML='<p>'+E(st).replace(/\n/g,'<br>')+'</p>';
           }
         }
 
         function fin(){
-          if(fin_lock)return;
-          fin_lock=true;
-          
-          if(timeoutId){
-            clearTimeout(timeoutId);
-            timeoutId=null;
-          }
-          
-          gen=false;
-          sb.disabled=false;
-          xb.classList.remove('on');
-          tp.classList.remove('on');
+          if(fin_lock)return;fin_lock=true;
+          gen=false;sb.disabled=false;xb.classList.remove('on');tp.classList.remove('on');
           try{ac=null}catch(e){}
-          
           if(st)hist.push({role:'assistant',content:st});
-          else if(se){
-            // If no content was generated, remove the empty message
-            try{ml.removeChild(se)}catch(e){}
-          }
-          
-          se=null;
-          st='';
-          
-          if(rf){
-            try{cancelAnimationFrame(rf)}catch(e){}
-            rf=null;
-          }
-          dirty=false;
-          fin_lock=false;
-          
-          if(queue.length){
-            queue=[];
-            setTimeout(function(){run()},100);
-          }
+          se=null;st='';
+          if(rf){try{cancelAnimationFrame(rf)}catch(e){}rf=null}
+          dirty=false;fin_lock=false;
+          if(queue.length){queue=[];run()}
         }
 
         window.addAssistantMessage=function(t){return mkMsg('assistant-message',P(t))};
